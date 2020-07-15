@@ -1,18 +1,15 @@
 # bot.py
 import os
 import shutil
-import asyncio
 import discord
-import export as export
-# import spotipy
-# from spotipy.oauth2 import SpotifyClientCredentials
 import youtube_dl
-from discord.utils import get
 from discord.ext import commands
+from discord.utils import get
 
 # spotipy.util.prompt_for_user_token(username, scope, client_id='your-spotify-client-id', client_secret='your-spotify-client-secret', redirect_uri='your-app-redirect-url')
 # client = discord.Client()
 # GUILD = '540197125200412702'
+
 client = discord.Client()
 botCommand = commands.Bot(command_prefix='.')
 
@@ -25,18 +22,18 @@ async def on_ready():
         f'{client.user} is connected to the following guild:\n'
     )
 
+
 voice = None
 
-
-@botCommand.command(pass_context=True)
+q_num=0
+@botCommand.command(pass_context=True, aliases=['p', 'play'])
 async def plays(ctx, url):
     server = ctx.message.guild
     global voice
     channel = ctx.message.author.voice.channel
-    # voice = get(client.voice_clients, guild=ctx.guild)
 
-    if voice and voice.is_connected():
-        await voice.move_to(channel)
+    if voice:
+        print("ok")
     else:
         voice = await channel.connect()
     await ctx.send(f"Joined {channel}")
@@ -45,6 +42,7 @@ async def plays(ctx, url):
     # song_there = os.path.isfile("song.mp3")
 
     def check_queue():
+        print('Test')
         Queue_infile = os.path.isdir("./Queue")
         if Queue_infile is True:
             DIR = os.path.abspath(os.path.realpath("Queue"))
@@ -54,7 +52,7 @@ async def plays(ctx, url):
                 first_file = os.listdir(DIR)[0]
             except:
                 print("No more queue\n")
-                #asyncio.queues.clear()
+                queues.clear()
                 return
             main_location = os.path.dirname(os.path.realpath(__file__))
             song_path = os.path.abspath(os.path.realpath("Queue") + "\\" + first_file)
@@ -69,25 +67,61 @@ async def plays(ctx, url):
                     if file.endswith(".mp3"):
                         os.rename(file, 'song.mp3')
 
-                voice.play(discord.FFmpegPCMAudio('song.mp3'), after=lambda e: print('done', e))
+                voice.play(discord.FFmpegPCMAudio('song.mp3'), after=lambda e: check_queue())
                 voice.source = discord.PCMVolumeTransformer(voice.source)
                 voice.source.volume = 0.07
             else:
-                #asyncio.queues.clear()
+                queues.clear()
                 return
         else:
-            #asyncio.queues.clear()
+            queues.clear()
             print("No song founds")
+
+
+    def add_queue():
+        print("Test")
+        Queue_infile = os.path.isdir("./Queue")
+        if Queue_infile is False:
+            os.mkdir("Queue")
+        DIR = os.path.abspath(os.path.realpath("Queue"))
+        q_num = len(os.listdir(DIR))
+        q_num += 1
+        add_queue = True
+        while add_queue:
+            if q_num in queues:
+                q_num += 1
+            else:
+                add_queue = False
+                queues[q_num] = q_num
+
+        queue_path = os.path.abspath(os.path.realpath("Queue") + f"\song{q_num}.%(ext)s")
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'quiet': True,
+            'outtmpl': queue_path,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192'
+            }],
+        }
+
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            print("Downloading audio now\n")
+            ydl.download([url])
+
+
+        print("Song added to queue\n")
 
     song_there = os.path.isfile("song.mp3")
     try:
         if song_there:
             os.remove("song.mp3")
-            #asyncio.queues.clear()
+            queues.clear()
             print("remove old song file")
     except PermissionError:
-        print("Trying to delete song file, but it's being played")
-        await ctx.send("ERROR : Music Playing")
+        add_queue()
+        await ctx.send("Adding song to the queue")
         return
 
     Queue_infile = os.path.isdir("./Queue")
@@ -123,25 +157,54 @@ async def plays(ctx, url):
             print(f"renamed file : {file}\n")
             os.rename(file, "song.mp3")
 
-    voice.play(discord.FFmpegPCMAudio('song.mp3'), after=lambda e: print('done', e))
+    voice.play(discord.FFmpegPCMAudio('song.mp3'), after=lambda e: check_queue())
     voice.source = discord.PCMVolumeTransformer(voice.source)
     voice.source.volume = 0.07
 
-    nname= name.rsplit("-",2)
+    nname = name.rsplit("-", 1)
     await ctx.send(f"Playing {nname[0]}")
     print("Playing\n")
 
-    # global voice
-    # if voice is None:
-    #     voice = await channel.connect()
 
-    # song_there = os.path.isfile("song.mp3")
-    # try:
-    #     if song_there:
-    #         os.remove("song.mp3")
-    # except PermissionError:
-    #     print("Trying to delete song file, but it's being played")
-    #     return
+queues = {}
+
+#
+# @botCommand.command(pass_context=True, aliases=['q', 'que'])
+# async def queue(ctx, url: str):
+#     Queue_infile = os.path.isdir("./Queue")
+#     if Queue_infile is False:
+#         os.mkdir("Queue")
+#     DIR = os.path.abspath(os.path.realpath("Queue"))
+#     q_num = len(os.listdir(DIR))
+#     q_num += 1
+#     add_queue = True
+#     while add_queue:
+#         if q_num in queues:
+#             q_num += 1
+#         else:
+#             add_queue = False
+#             queues[q_num] = q_num
+#
+#     queue_path = os.path.abspath(os.path.realpath("Queue") + f"\song{q_num}.%(ext)s")
+#     ydl_opts = {
+#         'format': 'bestaudio/best',
+#         'quiet': True,
+#         'outtmpl':queue_path,
+#         'postprocessors': [{
+#             'key': 'FFmpegExtractAudio',
+#             'preferredcodec': 'mp3',
+#             'preferredquality': '192'
+#         }],
+#     }
+#
+#     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+#         print("Downloading audio now\n")
+#         ydl.download([url])
+#     await ctx.send("Adding song"+str(q_num) + " to the queue")
+#
+#     print("Song added to queue\n")
+
+
 
 
 @botCommand.command(pass_context=True)
@@ -155,22 +218,6 @@ async def join(ctx):
     channel = ctx.message.author.voice.channel
     vc = channel.connect()
     await channel.connect()
-
-
-# @botCommand.command(pass_context=True)
-# async def spotify(ctx):
-#     birdy_uri = 'spotify:artist:2WX2uTcsvV5OnS0inACecP'
-#     spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
-#
-#     results = spotify.artist_albums(birdy_uri, album_type='album')
-#     albums = results['items']
-#     while results['next']:
-#         results = spotify.next(results)
-#         albums.extend(results['items'])
-#
-#     for album in albums:
-#         print(album['name'])
-
 
 @botCommand.event
 async def on_message(message):
@@ -209,4 +256,4 @@ async def on_message(message):
 
 
 # client.run('NzI0NzExNzQwNDQwNTc2MDgy.XvEesA.SC0bf4GMJdL3gAVSZIUuYcgjHa8')
-botCommand.run('NzI0NzExNzQwNDQwNTc2MDgy.XvEesA.SC0bf4GMJdL3gAVSZIUuYcgjHa8')
+botCommand.run('NzI0NzExNzQwNDQwNTc2MDgy.Xw9Asg.Gk0nvT0kg9dCIpVml9bHSXOtmnY')
