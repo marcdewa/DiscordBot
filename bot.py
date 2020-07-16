@@ -4,11 +4,9 @@ import shutil
 import discord
 import youtube_dl
 from discord.ext import commands
-from discord.utils import get
-
-# spotipy.util.prompt_for_user_token(username, scope, client_id='your-spotify-client-id', client_secret='your-spotify-client-secret', redirect_uri='your-app-redirect-url')
-# client = discord.Client()
-# GUILD = '540197125200412702'
+import urllib.parse
+import urllib.request
+import re
 
 client = discord.Client()
 botCommand = commands.Bot(command_prefix='.')
@@ -22,19 +20,46 @@ async def on_ready():
         f'{client.user} is connected to the following guild:\n'
     )
 
+@botCommand.command(pass_context=True, aliases=['y'])
+async def youtube(ctx,*,search):
+    query_string = urllib.parse.urlencode({
+        'search_query': search
+    })
+
+    htm_content = urllib.request.urlopen(
+        'http://www.youtube.com/results?' + query_string
+    )
+    print(r'/watch\?v=(.{11})')
+
+    search_results = re.findall(r'/watch\?v=(.{11})', htm_content.read().decode('utf-8'))
+    await ctx.send('http://www.youtube.com/watch?v=' + search_results[0])
 
 voice = None
 
 q_num=0
+
 @botCommand.command(pass_context=True, aliases=['p', 'play'])
-async def plays(ctx, url):
+async def plays(ctx,*,url):
     server = ctx.message.guild
     global voice
     channel = ctx.message.author.voice.channel
+    if not str(url).startswith('http'):
+        query_string = urllib.parse.urlencode({
+            'search_query': url
+        })
+
+        htm_content = urllib.request.urlopen(
+            'http://www.youtube.com/results?' + query_string
+        )
+        print(r'/watch\?v=(.{11})')
+
+        search_results = re.findall(r'/watch\?v=(.{11})', htm_content.read().decode('utf-8'))
+        url = 'http://www.youtube.com/watch?v=' + search_results[0]
 
     if voice:
         print("ok")
     else:
+
         voice = await channel.connect()
     await ctx.send(f"Joined {channel}")
     # if voice is None:
@@ -168,45 +193,6 @@ async def plays(ctx, url):
 
 queues = {}
 
-#
-# @botCommand.command(pass_context=True, aliases=['q', 'que'])
-# async def queue(ctx, url: str):
-#     Queue_infile = os.path.isdir("./Queue")
-#     if Queue_infile is False:
-#         os.mkdir("Queue")
-#     DIR = os.path.abspath(os.path.realpath("Queue"))
-#     q_num = len(os.listdir(DIR))
-#     q_num += 1
-#     add_queue = True
-#     while add_queue:
-#         if q_num in queues:
-#             q_num += 1
-#         else:
-#             add_queue = False
-#             queues[q_num] = q_num
-#
-#     queue_path = os.path.abspath(os.path.realpath("Queue") + f"\song{q_num}.%(ext)s")
-#     ydl_opts = {
-#         'format': 'bestaudio/best',
-#         'quiet': True,
-#         'outtmpl':queue_path,
-#         'postprocessors': [{
-#             'key': 'FFmpegExtractAudio',
-#             'preferredcodec': 'mp3',
-#             'preferredquality': '192'
-#         }],
-#     }
-#
-#     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-#         print("Downloading audio now\n")
-#         ydl.download([url])
-#     await ctx.send("Adding song"+str(q_num) + " to the queue")
-#
-#     print("Song added to queue\n")
-
-
-
-
 @botCommand.command(pass_context=True)
 async def ping(ctx):
     await ctx.send('test')
@@ -243,16 +229,6 @@ async def on_message(message):
         response = 'https://www.instagram.com/h.yojeong/'
         await message.channel.send(response)
     await botCommand.process_commands(message)
-
-
-# @botCommand.command(pass_context=True)
-# async def play(ctx, url):
-#     await join(ctx)
-#     server = ctx.message.server
-#     voice_client = client.voice_client_in(server)
-#     player = await voice_client.create_ytdl_player(url)
-#     players[server.id] = player
-#     player.start()
 
 
 # client.run('NzI0NzExNzQwNDQwNTc2MDgy.XvEesA.SC0bf4GMJdL3gAVSZIUuYcgjHa8')
