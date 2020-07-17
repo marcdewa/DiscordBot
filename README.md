@@ -15,5 +15,3 @@ example command :
 - .p darude sandstrom
 - .p [youtubeURL]
 # References
-- <a href="https://www.ubisoft.com/en-gb/game/rainbow-six/siege">Rainbow Six Siege</a>
-- <a href="https://playoverwatch.com/en-us/">Overwatch</a>
