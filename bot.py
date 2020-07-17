@@ -241,5 +241,4 @@ async def on_message(message):
     await botCommand.process_commands(message)
 
 
-# client.run('NzI0NzExNzQwNDQwNTc2MDgy.XvEesA.SC0bf4GMJdL3gAVSZIUuYcgjHa8')
 botCommand.run(token)
