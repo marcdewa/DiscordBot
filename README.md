@@ -2,7 +2,6 @@
 
 # Built With
 - Python 3.8
-<br/>
 Python PIP<br/>
 - discord.py 1.3.3
 - PyNaCl 1.4.0
