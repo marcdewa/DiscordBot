@@ -7,10 +7,16 @@ from discord.ext import commands
 import urllib.parse
 import urllib.request
 import re
+import dotenv
+from pathlib import Path  # Python 3.6+ only
+from dotenv import load_dotenv
+
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
 client = discord.Client()
 botCommand = commands.Bot(command_prefix='.')
-
+token = os.getenv("DISCORD_TOKEN")
 players = {}
 
 
@@ -20,8 +26,9 @@ async def on_ready():
         f'{client.user} is connected to the following guild:\n'
     )
 
+
 @botCommand.command(pass_context=True, aliases=['y'])
-async def youtube(ctx,*,search):
+async def youtube(ctx, *, search):
     query_string = urllib.parse.urlencode({
         'search_query': search
     })
@@ -34,12 +41,14 @@ async def youtube(ctx,*,search):
     search_results = re.findall(r'/watch\?v=(.{11})', htm_content.read().decode('utf-8'))
     await ctx.send('http://www.youtube.com/watch?v=' + search_results[0])
 
+
 voice = None
 
-q_num=0
+q_num = 0
+
 
 @botCommand.command(pass_context=True, aliases=['p', 'play'])
-async def plays(ctx,*,url):
+async def plays(ctx, *, url):
     server = ctx.message.guild
     global voice
     channel = ctx.message.author.voice.channel
@@ -62,6 +71,7 @@ async def plays(ctx,*,url):
 
         voice = await channel.connect()
     await ctx.send(f"Joined {channel}")
+
     # if voice is None:
     #     voice = await channel.connect()
     # song_there = os.path.isfile("song.mp3")
@@ -102,7 +112,6 @@ async def plays(ctx,*,url):
             queues.clear()
             print("No song founds")
 
-
     def add_queue():
         print("Test")
         Queue_infile = os.path.isdir("./Queue")
@@ -134,7 +143,6 @@ async def plays(ctx,*,url):
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             print("Downloading audio now\n")
             ydl.download([url])
-
 
         print("Song added to queue\n")
 
@@ -187,11 +195,12 @@ async def plays(ctx,*,url):
     voice.source.volume = 0.07
 
     nname = name.rsplit("-", 1)
-    await ctx.send(f"Playing {nname[0]}")
+    await ctx.send(f"Playing  :notes: `{nname[0]}` :notes:")
     print("Playing\n")
 
 
 queues = {}
+
 
 @botCommand.command(pass_context=True)
 async def ping(ctx):
@@ -204,6 +213,7 @@ async def join(ctx):
     channel = ctx.message.author.voice.channel
     vc = channel.connect()
     await channel.connect()
+
 
 @botCommand.event
 async def on_message(message):
@@ -232,4 +242,4 @@ async def on_message(message):
 
 
 # client.run('NzI0NzExNzQwNDQwNTc2MDgy.XvEesA.SC0bf4GMJdL3gAVSZIUuYcgjHa8')
-botCommand.run('NzI0NzExNzQwNDQwNTc2MDgy.Xw9Asg.Gk0nvT0kg9dCIpVml9bHSXOtmnY')
+botCommand.run(token)
